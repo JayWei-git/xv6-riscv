@@ -10,7 +10,7 @@ volatile static int started = 0;
 void
 main()
 {
-  if(cpuid() == 0){
+  if(cpuid() == 0) { // Core 0
     consoleinit();
     printfinit();
     printf("\n");
@@ -29,10 +29,10 @@ main()
     fileinit();      // file table
     virtio_disk_init(); // emulated hard disk
     userinit();      // first user process
-    __sync_synchronize();
+    __sync_synchronize(); // 在此指令之前的所有内存读写操作，必须在执行此指令之后的内存读写操作之前完成
     started = 1;
   } else {
-    while(started == 0)
+    while(started == 0) // 其它核心在核心0初始化完成之前一直空转
       ;
     __sync_synchronize();
     printf("hart %d starting\n", cpuid());
@@ -41,5 +41,5 @@ main()
     plicinithart();   // ask PLIC for device interrupts
   }
 
-  scheduler();        
+  scheduler(); // 每个核心都会调用     
 }
