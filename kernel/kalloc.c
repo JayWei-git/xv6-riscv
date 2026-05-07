@@ -15,28 +15,28 @@ extern char end[]; // first address after kernel.
                    // defined by kernel.ld.
 
 struct run {
-  struct run *next;
+  struct run *next; // 指向一下个空闲页面
 };
 
 struct {
-  struct spinlock lock;
-  struct run *freelist;
+  struct spinlock lock; // 自旋锁
+  struct run *freelist; // 隐式空闲链表头指针
 } kmem;
 
 void
 kinit()
 {
-  initlock(&kmem.lock, "kmem");
-  freerange(end, (void*)PHYSTOP);
+  initlock(&kmem.lock, "kmem"); // 初始化自旋锁
+  freerange(end, (void*)PHYSTOP); // 将end到PHYSTOP间的所有物理内存按页大小分割并加入空闲链表
 }
 
 void
 freerange(void *pa_start, void *pa_end)
 {
   char *p;
-  p = (char*)PGROUNDUP((uint64)pa_start);
-  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
-    kfree(p);
+  p = (char*)PGROUNDUP((uint64)pa_start); // 确保地址对齐
+  for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE) // 按页分割
+    kfree(p); // 加入空闲链表
 }
 
 // Free the page of physical memory pointed at by pa,
@@ -49,7 +49,7 @@ kfree(void *pa)
   struct run *r;
 
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
-    panic("kfree");
+    panic("kfree"); // 地址未对齐或不在有效范围内，直接panic
 
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
@@ -57,7 +57,7 @@ kfree(void *pa)
   r = (struct run*)pa;
 
   acquire(&kmem.lock);
-  r->next = kmem.freelist;
+  r->next = kmem.freelist; // 头插法
   kmem.freelist = r;
   release(&kmem.lock);
 }
@@ -72,7 +72,7 @@ kalloc(void)
 
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+  if(r) // 检查链表是否为空
     kmem.freelist = r->next;
   release(&kmem.lock);
 

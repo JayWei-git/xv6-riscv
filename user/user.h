@@ -2,9 +2,9 @@
 
 struct stat;
 
-// system calls
+// system calls 系统调用接口
 int fork(void);
-int exit(int) __attribute__((noreturn));
+int exit(int) __attribute__((noreturn)); // 告诉编译器该函数永不返回
 int wait(int*);
 int pipe(int*);
 int write(int, const void*, int);
@@ -25,7 +25,7 @@ char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
 
-// ulib.c
+// ulib.c 库函数接口
 int stat(const char*, struct stat*);
 char* strcpy(char*, const char*);
 void *memmove(void*, const void*, int);
@@ -41,7 +41,7 @@ char* sbrk(int);
 char* sbrklazy(int);
 
 // printf.c
-void fprintf(int, const char*, ...) __attribute__ ((format (printf, 2, 3)));
+void fprintf(int, const char*, ...) __attribute__ ((format (printf, 2, 3))); // 让编译器做静态检查
 void printf(const char*, ...) __attribute__ ((format (printf, 1, 2)));
 
 // umalloc.c
